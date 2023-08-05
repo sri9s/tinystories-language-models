@@ -1,210 +1,185 @@
-"""Download, preprocess and serve the TinyStories dataset as a DataLoader."""
+"""LightningDataModule` for the TinyStories dataset."""
 
-import argparse
-import glob
-import json
-import os
-import random
-import tarfile
-from concurrent.futures import ThreadPoolExecutor, as_completed
-from typing import List
+from typing import Any, Dict, Optional, Tuple
 
-import numpy as np
-import requests
-import torch
-import torch.distributed as dist
-from tokenizer import Tokenizer
-from tqdm import tqdm
-
-DATA_CACHE_DIR = "data"
+from lightning import LightningDataModule
+from tinystories_dataset import TinyStoriesDataset
+from torch.utils.data import DataLoader, Dataset
 
 
-def download_file(url: str, fname: str, chunk_size=1024):
-    """Helper function to download a file from a given url."""
-    resp = requests.get(url, stream=True, timeout=5)
-    total = int(resp.headers.get("content-length", 0))
-    with open(fname, "wb") as file, tqdm(
-        desc=fname,
-        total=total,
-        unit="iB",
-        unit_scale=True,
-        unit_divisor=1024,
-    ) as bar:
-        for data in resp.iter_content(chunk_size=chunk_size):
-            size = file.write(data)
-            bar.update(size)
+class TRANSFORMERDataModule(LightningDataModule):
+    """`LightningDataModule` for the MNIST dataset.
 
+    The MNIST database of handwritten digits has a training set of 60,000 examples, and a test set of 10,000 examples.
+    It is a subset of a larger set available from NIST. The digits have been size-normalized and centered in a
+    fixed-size image. The original black and white images from NIST were size normalized to fit in a 20x20 pixel box
+    while preserving their aspect ratio. The resulting images contain grey levels as a result of the anti-aliasing
+    technique used by the normalization algorithm. the images were centered in a 28x28 image by computing the center of
+    mass of the pixels, and translating the image so as to position this point at the center of the 28x28 field.
 
-def download():
-    """Downloads the dataset to disk."""
-    os.makedirs(DATA_CACHE_DIR, exist_ok=True)
+    A `LightningDataModule` implements 7 key methods:
 
-    # download the TinyStories dataset, unless it's already downloaded
-    data_url = "https://huggingface.co/datasets/roneneldan/TinyStories/resolve/main/TinyStories_all_data.tar.gz"
-    data_filename = os.path.join(DATA_CACHE_DIR, "TinyStories_all_data.tar.gz")
-    if not os.path.exists(data_filename):
-        print(f"Downloading {data_url} to {data_filename}...")
-        download_file(data_url, data_filename)
-    else:
-        print(f"{data_filename} already exists, skipping download...")
+    ```python
+        def prepare_data(self):
+        # Things to do on 1 GPU/TPU (not on every GPU/TPU in DDP).
+        # Download data, pre-process, split, save to disk, etc...
 
-    # unpack the tar.gz file into all the data shards (json files)
-    data_dir = os.path.join(DATA_CACHE_DIR, "TinyStories_all_data")
-    if not os.path.exists(data_dir):
-        os.makedirs(data_dir, exist_ok=True)
-        print(f"Unpacking {data_filename}...")
-        with tarfile.open(os.path.join(data_dir, data_filename), "r:gz") as tar:
-            for member in tar.getmembers():
-                # Ensure that the member is a file (not a directory or symlink)
-                if member.isfile():
-                    # Check if the filename contains safe characters (modify this as needed)
-                    if not any(char in member.name for char in ["/", "\\", ".."]):
-                        tar.extract(member, data_dir)
-            # tar.extractall(data_dir)
-        # os.system(f"tar -xzf {data_filename} -C {data_dir}")
-    else:
-        print(f"{data_dir} already exists, skipping unpacking...")
-    # print a single example just for debugging and such
-    shard_filenames = sorted(glob.glob(os.path.join(data_dir, "*.json")))
-    with open(shard_filenames[0]) as f:
-        data = json.load(f)
-    print("Download done.")
-    print(f"Number of shards: {len(shard_filenames)}")
-    print(f"Example story:\n{data[0]}")
+        def setup(self, stage):
+        # Things to do on every process in DDP.
+        # Load data, set variables, etc...
 
+        def train_dataloader(self):
+        # return train dataloader
 
-def pretokenize():
-    """Pretokenize dataset.
+        def val_dataloader(self):
+        # return validation dataloader
 
-    This is a slow operation, so we do it once and save to disk.
+        def test_dataloader(self):
+        # return test dataloader
+
+        def predict_dataloader(self):
+        # return predict dataloader
+
+        def teardown(self, stage):
+        # Called on every process in DDP.
+        # Clean up after fit or test.
+    ```
+
+    This allows you to share a full dataset without explaining how to download,
+    split, transform and process the data.
+
+    Read the docs:
+        https://lightning.ai/docs/pytorch/latest/data/datamodule.html
     """
-    enc = Tokenizer()
 
-    def process_shard(shard):
-        """Tokenize a single shard and save to disk.
+    def __init__(
+        self,
+        data_dir: str = "data/TinyStories_all_data/",
+        train_val_test_split: Tuple[int, int, int] = (55_000, 5_000, 10_000),
+        batch_size: int = 8,
+        num_workers: int = 0,
+        pin_memory: bool = False,
+    ) -> None:
+        """Initialize a `TRANSFORMERDataModule`.
 
-        Parameters
-        ----------
-        shard
-            Path to a single shard (json file).
-        """
-        with open(shard) as f:
-            data = json.load(f)
-        all_tokens = []
-        for example in tqdm(data):
-            text = example["story"]
-            text = text.strip()  # get rid of leading/trailing whitespace
-            tokens = enc.encode(text, bos=True, eos=False)  # encode the text, use BOS
-            all_tokens.extend(tokens)
-        # convert to uint16 nparray
-        all_tokens = np.array(all_tokens, dtype=np.uint16)
-        # write to disk
-        tokenized_filename = shard.replace(".json", ".bin")
-        with open(tokenized_filename, "wb") as f:
-            f.write(all_tokens.tobytes())
-        print(f"Saved {tokenized_filename}")
-
-    # iterate the shards and tokenize all of them one by one
-    data_dir = os.path.join(DATA_CACHE_DIR, "TinyStories_all_data")
-    shard_filenames = sorted(glob.glob(os.path.join(data_dir, "*.json")))
-
-    # process all the shards in a threadpool
-    with ThreadPoolExecutor(max_workers=8) as executor:
-        executor.map(process_shard, shard_filenames)
-
-    print("Done.")
-
-
-class PretokDataset(torch.utils.data.IterableDataset):
-    """Loads pretokenized examples from disk and yields them as PyTorch tensors."""
-
-    def __init__(self, split, max_seq_len):
-        """Initialize the dataset.
-
-        Parameters
-        ----------
-        split
-            Either "train" or "test".
-        max_seq_len
-            Maximum sequence length. Longer sequences will be truncated.
+        :param data_dir: The data directory. Defaults to `"data/"`.
+        :param train_val_test_split: The train, validation and test split. Defaults to `(55_000, 5_000, 10_000)`.
+        :param batch_size: The batch size. Defaults to `64`.
+        :param num_workers: The number of workers. Defaults to `0`.
+        :param pin_memory: Whether to pin memory. Defaults to `False`.
         """
         super().__init__()
-        self.split = split
-        self.max_seq_len = max_seq_len
 
-    def __iter__(self):
-        """Iterate over the dataset and yield batches of examples."""
-        # get worker info within a DataLoader
-        worker_info = torch.utils.data.get_worker_info()
-        worker_id = worker_info.id if worker_info else 0
-        # get DDP rank info
-        rank = dist.get_rank() if dist.is_initialized() else 0
-        # combine the worker_id and worker_rank to create a unique seed for rng
-        seed = 42 + worker_id + 1337 * rank
-        rng = random.Random(seed)
-        print(f"Created a PretokDataset with rng seed {seed}")
-        data_dir = os.path.join(DATA_CACHE_DIR, "TinyStories_all_data")
-        shard_filenames = sorted(glob.glob(os.path.join(data_dir, "*.bin")))
-        # train/test split. let's use only shard 0 for test split, rest train
-        shard_filenames = shard_filenames[1:] if self.split == "train" else shard_filenames[:1]
-        while True:
-            rng.shuffle(shard_filenames)
-            for shard in shard_filenames:
-                # open the dataset for reading but keep it on disk with memmap
-                m = np.memmap(shard, dtype=np.uint16, mode="r")
-                num_batches = len(m) // self.max_seq_len
-                num_batches -= 1  # drop the last partial batch
-                assert num_batches > 0, "this shard is way too small? investigate."
-                ixs = list(range(num_batches))
-                rng.shuffle(ixs)
-                for ix in ixs:
-                    start = ix * self.max_seq_len
-                    end = start + self.max_seq_len + 1
-                    # calling .astype will copy the data into a new numpy array, now in RAM
-                    chunk = torch.from_numpy((m[start:end]).astype(np.int64))
-                    x = chunk[:-1]
-                    y = chunk[1:]
-                    yield x, y
+        # this line allows to access init params with 'self.hparams' attribute
+        # also ensures init params will be stored in ckpt
+        self.save_hyperparameters(logger=False)
 
+        # data transformations
+        # self.transforms = transforms.Compose(
+        #     [transforms.ToTensor(), transforms.Normalize((0.1307,), (0.3081,))]
+        # )
 
-class Task:
-    """Task class for the TinyStories dataset."""
+        self.data_train: Optional[Dataset] = None
+        self.data_val: Optional[Dataset] = None
+        self.data_test: Optional[Dataset] = None
 
-    @staticmethod
-    def iter_batches(split, batch_size, max_seq_len, device, num_workers=0):
-        """Iterate batches of examples from the dataset.
+    # @property
+    # def num_classes(self) -> int:
+    #     """Get the number of classes.
 
-        Parameters
-        ----------
-        split
-            Either "train" or "test".
-        batch_size
-            Batch size.
-        max_seq_len
-            Maximum sequence length. Longer sequences will be truncated.
-        device
-            PyTorch device.
-        num_workers, optional
-            Number of workers for the DataLoader
+    #     :return: The number of MNIST classes (10).
+    #     """
+    #     return 10
+
+    def prepare_data(self) -> None:
+        """Download data if needed. Lightning ensures that `self.prepare_data()` is called only
+        within a single process on CPU, so you can safely add your downloading logic within. In
+        case of multi-node training, the execution of this hook depends upon
+        `self.prepare_data_per_node()`.
+
+        Do not use it to assign state (self.x = y).
         """
-        ds = PretokDataset(split, max_seq_len)
-        dl = torch.utils.data.DataLoader(
-            ds, batch_size=batch_size, pin_memory=True, num_workers=num_workers
+        # MNIST(self.hparams.data_dir, train=True, download=True)
+        # MNIST(self.hparams.data_dir, train=False, download=True)
+        pass
+
+    def setup(self, stage: Optional[str] = None) -> None:
+        """Load data. Set variables: `self.data_train`, `self.data_val`, `self.data_test`.
+
+        This method is called by Lightning before `trainer.fit()`, `trainer.validate()`, `trainer.test()`, and
+        `trainer.predict()`, so be careful not to execute things like random split twice! Also, it is called after
+        `self.prepare_data()` and there is a barrier in between which ensures that all the processes proceed to
+        `self.setup()` once the data is prepared and available for use.
+
+        :param stage: The stage to setup. Either `"fit"`, `"validate"`, `"test"`, or `"predict"`. Defaults to ``None``.
+        """
+        # load and split datasets only if not loaded already
+        self.data_train = TinyStoriesDataset(split="train", max_seq_len=512)
+        self.data_test = TinyStoriesDataset(split="test", max_seq_len=512)
+
+    def train_dataloader(self) -> DataLoader[Any]:
+        """Create and return the train dataloader.
+
+        :return: The train dataloader.
+        """
+        return DataLoader(
+            dataset=self.data_train,
+            batch_size=self.hparams.batch_size,
+            num_workers=self.hparams.num_workers,
+            pin_memory=self.hparams.pin_memory,
+            shuffle=True,
         )
-        for x, y in dl:
-            x = x.to(device, non_blocking=True)
-            y = y.to(device, non_blocking=True)
-            yield x, y
+
+    def val_dataloader(self) -> DataLoader[Any]:
+        """Create and return the validation dataloader.
+
+        :return: The validation dataloader.
+        """
+        return DataLoader(
+            dataset=self.data_val,
+            batch_size=self.hparams.batch_size,
+            num_workers=self.hparams.num_workers,
+            pin_memory=self.hparams.pin_memory,
+            shuffle=False,
+        )
+
+    # def test_dataloader(self) -> DataLoader[Any]:
+    #     """Create and return the test dataloader.
+
+    #     :return: The test dataloader.
+    #     """
+    #     return DataLoader(
+    #         dataset=self.data_test,
+    #         batch_size=self.hparams.batch_size,
+    #         num_workers=self.hparams.num_workers,
+    #         pin_memory=self.hparams.pin_memory,
+    #         shuffle=False,
+    #     )
+
+    def teardown(self, stage: Optional[str] = None) -> None:
+        """Lightning hook for cleaning up after `trainer.fit()`, `trainer.validate()`,
+        `trainer.test()`, and `trainer.predict()`.
+
+        :param stage: The stage being torn down. Either `"fit"`, `"validate"`, `"test"`, or `"predict"`.
+            Defaults to ``None``.
+        """
+        pass
+
+    def state_dict(self) -> Dict[Any, Any]:
+        """Called when saving a checkpoint. Implement to generate and save the datamodule state.
+
+        :return: A dictionary containing the datamodule state that you want to save.
+        """
+        return {}
+
+    def load_state_dict(self, state_dict: Dict[str, Any]) -> None:
+        """Called when loading a checkpoint. Implement to reload datamodule state given datamodule
+        `state_dict()`.
+
+        :param state_dict: The datamodule state returned by `self.state_dict()`.
+        """
+        pass
 
 
 if __name__ == "__main__":
-    parser = argparse.ArgumentParser()
-    parser.add_argument("stage", type=str, choices=["download", "train_tokenizer", "pretokenize"])
-    args = parser.parse_args()
-
-    # depending on the stage call the appropriate function
-    fun = {
-        "download": download,
-        "pretokenize": pretokenize,
-    }
-    fun[args.stage]()
+    _ = TRANSFORMERDataModule()
