@@ -9,7 +9,13 @@ from torch.nn import TransformerEncoder, TransformerEncoderLayer
 
 class TransformerModel(nn.Module):
     def __init__(
-        self, ntoken: int, d_model: int, nhead: int, d_hid: int, nlayers: int, dropout: float = 0.5
+        self,
+        ntoken: int,
+        d_model: int,
+        nhead: int,
+        d_hid: int,
+        nlayers: int,
+        dropout: float = 0.5,
     ):
         super().__init__()
         self.model_type = "Transformer"
