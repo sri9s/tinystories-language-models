@@ -12,9 +12,10 @@ import numpy as np
 import requests
 import torch
 import torch.distributed as dist
-from tokenizer import Tokenizer
 from torch.utils.data import Dataset
 from tqdm import tqdm
+
+from src.data.tokenizer import Tokenizer
 
 DATA_CACHE_DIR = "data"
 
@@ -211,12 +212,15 @@ class TinyStoriesDataset(Dataset):
         """Initialize the dataset."""
         self.split = split
         self.max_seq_len = max_seq_len
-        self.data_dir = "/data/TinyStories_all_data"
-        self.shard_filenames = sorted(glob.glob(self.data_dir, "*.bin"))
+        self.data_dir = "/home/jayachs1/tinystories-language-models/data/TinyStories_all_data"
+        self.shard_filenames = sorted(glob.glob(os.path.join(self.data_dir, "*.bin")))
+        print(f"Found {len(self.shard_filenames)} shards.")
+        print(self.shard_filenames[1:3])
         self.shard_filenames = (
-            self.shard_filenames[1:] if self.split == "train" else self.shard_filenames[0]
+            self.shard_filenames[1:4] if self.split == "train" else [self.shard_filenames[0]]
         )
         self.data = []
+        print(self.shard_filenames)
         rng = random.Random(9)
         for shard in self.shard_filenames:
             data_shard = np.memmap(shard, dtype=np.uint16, mode="r")
