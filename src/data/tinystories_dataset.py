@@ -16,7 +16,9 @@ from torch.utils.data import Dataset
 from tqdm import tqdm
 
 from src.data.tokenizer import Tokenizer
+from src.utils import pylogger
 
+log = pylogger.get_pylogger(__name__)
 DATA_CACHE_DIR = "data"
 
 
@@ -240,10 +242,13 @@ class TinyStoriesDataset(Dataset):
         print(f"Loaded {len(self.data)} examples from {len(self.shard_filenames)} shards")
 
     def __len__(self):
+        log.info(f"data len- {len(self.data)}")
         return len(self.data)
 
     def __getitem__(self, idx):
+        log.info(f"idx- {idx}")
         x, y = self.data[idx]
+        log.info(f"x- {x.shape} y- {y.shape}")
         return x, y
 
 
