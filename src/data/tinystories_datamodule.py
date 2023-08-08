@@ -3,8 +3,9 @@
 from typing import Any, Dict, Optional, Tuple
 
 from lightning import LightningDataModule
-from tinystories_dataset import TinyStoriesDataset
 from torch.utils.data import DataLoader, Dataset
+
+from src.data.tinystories_dataset import TinyStoriesDataset
 
 
 class TRANSFORMERDataModule(LightningDataModule):
