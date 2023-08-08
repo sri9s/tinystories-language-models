@@ -249,6 +249,7 @@ class TinyStoriesDataset(Dataset):
         log.info(f"idx- {idx}")
         x, y = self.data[idx]
         log.info(f"x- {x.shape} y- {y.shape}")
+        log.info(f"max x- {torch.max(x)} max y- {torch.max(y)}")
         return x, y
 
 
