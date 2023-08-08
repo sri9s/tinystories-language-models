@@ -116,7 +116,7 @@ class TRANSFORMERDataModule(LightningDataModule):
         """
         # load and split datasets only if not loaded already
         self.data_train = TinyStoriesDataset(split="train", max_seq_len=512)
-        self.data_test = TinyStoriesDataset(split="test", max_seq_len=512)
+        self.data_val = TinyStoriesDataset(split="test", max_seq_len=512)
 
     def train_dataloader(self) -> DataLoader[Any]:
         """Create and return the train dataloader.
