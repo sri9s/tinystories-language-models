@@ -3,8 +3,14 @@
 import math
 
 import torch
+import torch.nn.functional as F
 from torch import Tensor, nn
 from torch.nn import TransformerEncoder, TransformerEncoderLayer
+
+from src.data.tokenizer import Tokenizer
+from src.utils import pylogger
+
+log = pylogger.get_pylogger(__name__)
 
 
 class TransformerModel(nn.Module):
@@ -82,9 +88,34 @@ class PositionalEncoding(nn.Module):
 
 if __name__ == "__main__":
     """Test code."""
-    model = TransformerModel(ntoken=200, d_model=32, nhead=4, d_hid=64, nlayers=2)
-    print(model)
-    src = torch.rand(10, 32).long()
-    out = model(src)
-    print(out.shape)
-    print(out)
+    # Model hyperparameters
+    ntoken = 10000
+    d_model = 512
+    nhead = 8
+    d_hid = 2048
+    nlayers = 6
+    dropout = 0.5
+
+    model = TransformerModel(
+        ntoken=ntoken, d_model=d_model, nhead=nhead, d_hid=d_hid, nlayers=nlayers
+    )
+    log.info(model)
+
+    seq_len = 10
+    batch_size = 8
+    # input shape: [seq_len, batch_size]
+    # output shape: [seq_len, batch_size, ntoken]
+    # target shape: [seq_len, batch_size]
+    input_tensor = torch.randint(low=0, high=ntoken, size=(seq_len, batch_size))
+    target_tensor = torch.randint(low=0, high=ntoken, size=(seq_len, batch_size))
+    output = model(input_tensor)
+    probabilities = torch.softmax(output[-1, 0, :] / 0.7, dim=0)
+    next_token = torch.multinomial(probabilities, num_samples=1).item()
+    loss = F.cross_entropy(output.view(-1, ntoken), target_tensor.view(-1))
+    enc = Tokenizer()
+    print(f"Input shape: {input_tensor.shape}")
+    print("Output shape:", output.shape)
+    print("Target shape:", target_tensor.shape)
+    print("probabilities", probabilities.shape)
+    print("next_token:", next_token)
+    print("loss:", loss)
