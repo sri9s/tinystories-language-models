@@ -5,7 +5,7 @@ from typing import Any, Dict, Optional, Tuple
 from lightning import LightningDataModule
 from torch.utils.data import DataLoader, Dataset
 
-from src.data.tinystories_dataset import TinyStoriesDataset
+from src.data.tinystories_dataset import PretokDataset
 
 
 class TRANSFORMERDataModule(LightningDataModule):
@@ -115,8 +115,8 @@ class TRANSFORMERDataModule(LightningDataModule):
         :param stage: The stage to setup. Either `"fit"`, `"validate"`, `"test"`, or `"predict"`. Defaults to ``None``.
         """
         # load and split datasets only if not loaded already
-        self.data_train = TinyStoriesDataset(split="train", max_seq_len=512)
-        self.data_val = TinyStoriesDataset(split="test", max_seq_len=512)
+        self.data_train = PretokDataset(split="train", max_seq_len=512)
+        self.data_val = PretokDataset(split="test", max_seq_len=512)
 
     def train_dataloader(self) -> DataLoader[Any]:
         """Create and return the train dataloader.
@@ -128,7 +128,6 @@ class TRANSFORMERDataModule(LightningDataModule):
             batch_size=self.hparams.batch_size,
             num_workers=self.hparams.num_workers,
             pin_memory=self.hparams.pin_memory,
-            shuffle=True,
         )
 
     def val_dataloader(self) -> DataLoader[Any]:
@@ -141,7 +140,6 @@ class TRANSFORMERDataModule(LightningDataModule):
             batch_size=self.hparams.batch_size,
             num_workers=self.hparams.num_workers,
             pin_memory=self.hparams.pin_memory,
-            shuffle=False,
         )
 
     # def test_dataloader(self) -> DataLoader[Any]:
