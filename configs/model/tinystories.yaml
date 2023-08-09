@@ -16,8 +16,8 @@ scheduler:
 net:
   _target_: models.components.transformer_net.TransformerModel
   ntoken: 32000
-  d_model: 512
-  nhead: 8
-  d_hid: 1024
-  nlayers: 5
+  d_model: 768
+  nhead: 12
+  d_hid: 64
+  nlayers: 12
   dropout: 0.5
