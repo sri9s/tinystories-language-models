@@ -58,6 +58,7 @@ class TRANSFORMERDataModule(LightningDataModule):
         data_dir: str = "data/TinyStories_all_data/",
         train_val_test_split: Tuple[int, int, int] = (55_000, 5_000, 10_000),
         batch_size: int = 8,
+        seq_len: int = 1024,
         num_workers: int = 0,
         pin_memory: bool = False,
     ) -> None:
@@ -115,8 +116,8 @@ class TRANSFORMERDataModule(LightningDataModule):
         :param stage: The stage to setup. Either `"fit"`, `"validate"`, `"test"`, or `"predict"`. Defaults to ``None``.
         """
         # load and split datasets only if not loaded already
-        self.data_train = PretokDataset(split="train", max_seq_len=512)
-        self.data_val = PretokDataset(split="test", max_seq_len=512)
+        self.data_train = PretokDataset(split="train", max_seq_len=self.hparams.seq_len)
+        self.data_val = PretokDataset(split="test", max_seq_len=self.hparams.seq_len)
 
     def train_dataloader(self) -> DataLoader[Any]:
         """Create and return the train dataloader.
