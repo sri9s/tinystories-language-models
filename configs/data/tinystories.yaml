@@ -1,4 +1,4 @@
-_target_: src.data.tinystories_datamodule.TRANSFORMERDataModule
+_target_: data.tinystories_datamodule.TRANSFORMERDataModule
 data_dir: ${paths.data_dir}
 batch_size: 8
 num_workers: 0
