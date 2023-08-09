@@ -89,7 +89,7 @@ class PositionalEncoding(nn.Module):
 if __name__ == "__main__":
     """Test code."""
     # Model hyperparameters
-    ntoken = 10000
+    ntoken = 32000
     d_model = 512
     nhead = 8
     d_hid = 2048
