@@ -217,9 +217,8 @@ class TinyStoriesDataset(Dataset):
         self.data_dir = "/home/jayachs1/tinystories-language-models/data/TinyStories_all_data"
         self.shard_filenames = sorted(glob.glob(os.path.join(self.data_dir, "*.bin")))
         print(f"Found {len(self.shard_filenames)} shards.")
-        print(self.shard_filenames[1:3])
         self.shard_filenames = (
-            self.shard_filenames[1:4] if self.split == "train" else [self.shard_filenames[0]]
+            self.shard_filenames[1:] if self.split == "train" else [self.shard_filenames[0]]
         )
         self.data = []
         print(self.shard_filenames)
@@ -238,18 +237,20 @@ class TinyStoriesDataset(Dataset):
                 chunk = torch.from_numpy((data_shard[start:end]).astype(np.int64))
                 x = chunk[:-1]
                 y = chunk[1:]
+                # x = x.permute(1,0)
+                # y = y.permute(1,0)
                 self.data.append((x, y))
         print(f"Loaded {len(self.data)} examples from {len(self.shard_filenames)} shards")
 
     def __len__(self):
-        log.info(f"data len- {len(self.data)}")
+        # log.info(f"data len- {len(self.data)}")
         return len(self.data)
 
     def __getitem__(self, idx):
-        log.info(f"idx- {idx}")
+        # log.info(f"idx- {idx}")
         x, y = self.data[idx]
-        log.info(f"x- {x.shape} y- {y.shape}")
-        log.info(f"max x- {torch.max(x)} max y- {torch.max(y)}")
+        # log.info(f"x- {x.shape} y- {y.shape}")
+        # log.info(f"max x- {torch.max(x)} max y- {torch.max(y)}")
         return x, y
 
 
