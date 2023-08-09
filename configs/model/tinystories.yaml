@@ -1,4 +1,4 @@
-_target_: src.models.transformer_module.TRANSFORMERModule
+_target_: models.transformer_module.TRANSFORMERModule
 
 optimizer:
   _target_: torch.optim.Adam
