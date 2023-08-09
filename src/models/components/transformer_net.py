@@ -90,9 +90,9 @@ if __name__ == "__main__":
     """Test code."""
     # Model hyperparameters
     ntoken = 32000
-    d_model = 512
-    nhead = 8
-    d_hid = 2048
+    d_model = 768
+    nhead = 12
+    d_hid = 64
     nlayers = 6
     dropout = 0.5
 
