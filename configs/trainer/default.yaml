@@ -2,8 +2,12 @@ _target_: lightning.pytorch.trainer.Trainer
 
 default_root_dir: ${paths.output_dir}
 
+overfit_batches: 10 # testing the pipeline
+
+accumulate_grad_batches: 8 # gradient accumulation
+
 min_epochs: 1 # prevents early stopping
-max_epochs: 10
+max_epochs: 3
 
 accelerator: cpu
 devices: 1
