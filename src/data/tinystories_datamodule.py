@@ -117,7 +117,8 @@ class TRANSFORMERDataModule(LightningDataModule):
         """
         # load and split datasets only if not loaded already
         self.data_train = PretokDataset(split="train", max_seq_len=self.hparams.seq_len)
-        self.data_val = PretokDataset(split="test", max_seq_len=self.hparams.seq_len)
+        self.data_val = PretokDataset(split="val", max_seq_len=self.hparams.seq_len)
+        self.data_test = PretokDataset(split="test", max_seq_len=self.hparams.seq_len)
 
     def train_dataloader(self) -> DataLoader[Any]:
         """Create and return the train dataloader.
@@ -143,18 +144,17 @@ class TRANSFORMERDataModule(LightningDataModule):
             pin_memory=self.hparams.pin_memory,
         )
 
-    # def test_dataloader(self) -> DataLoader[Any]:
-    #     """Create and return the test dataloader.
+    def test_dataloader(self) -> DataLoader[Any]:
+        """Create and return the test dataloader.
 
-    #     :return: The test dataloader.
-    #     """
-    #     return DataLoader(
-    #         dataset=self.data_test,
-    #         batch_size=self.hparams.batch_size,
-    #         num_workers=self.hparams.num_workers,
-    #         pin_memory=self.hparams.pin_memory,
-    #         shuffle=False,
-    #     )
+        :return: The test dataloader.
+        """
+        return DataLoader(
+            dataset=self.data_test,
+            batch_size=self.hparams.batch_size,
+            num_workers=self.hparams.num_workers,
+            pin_memory=self.hparams.pin_memory,
+        )
 
     def teardown(self, stage: Optional[str] = None) -> None:
         """Lightning hook for cleaning up after `trainer.fit()`, `trainer.validate()`,
