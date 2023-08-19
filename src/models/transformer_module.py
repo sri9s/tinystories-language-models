@@ -105,10 +105,9 @@ class TRANSFORMERModule(LightningModule):
         torch.Tensor
         """
         loss, preds, targets = self.model_step(batch)
-        print("training_step:", loss)
         # update and log metrics
         self.train_loss(loss)
-        self.log("train/loss", self.train_loss, on_step=True, on_epoch=False, prog_bar=True)
+        self.log("train/loss", self.train_loss, on_step=True, on_epoch=True, prog_bar=True)
 
         # return loss or backpropagation will fail
         return loss
@@ -131,7 +130,7 @@ class TRANSFORMERModule(LightningModule):
 
         # update and log metrics
         self.val_loss(loss)
-        self.log("val/loss", self.val_loss, on_step=True, on_epoch=False, prog_bar=True)
+        self.log("val/loss", self.val_loss, on_step=True, on_epoch=True, prog_bar=True)
 
     def on_validation_epoch_end(self) -> None:
         "Lightning hook that is called when a validation epoch ends."
