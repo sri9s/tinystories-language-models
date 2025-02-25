@@ -1,6 +1,6 @@
 <div align="center">
 
-# Tiny stories language models
+# 📚 Tiny Stories Language Models
 
 <a href="https://pytorch.org/get-started/locally/"><img alt="PyTorch" src="https://img.shields.io/badge/PyTorch-ee4c2c?logo=pytorch&logoColor=white"></a>
 <a href="https://pytorchlightning.ai/"><img alt="Lightning" src="https://img.shields.io/badge/-Lightning-792ee5?logo=pytorchlightning&logoColor=white"></a>
@@ -11,49 +11,46 @@
 
 </div>
 
-## Description
+## 🎯 Description
 
 This repository implements language models trained on the TinyStories dataset - a collection of simple, child-friendly stories generated using GPT-4. 
 
-## Dataset and format
+## 📊 Dataset and Format
 
-Tiny stories can be found at https://huggingface.co/datasets/roneneldan/TinyStories.
+TinyStories can be found at [HuggingFace Datasets](https://huggingface.co/datasets/roneneldan/TinyStories).
 
-### Data format:
+### Data Fields:
 
-**\['story', 'instruction', 'summary', 'source'\]**
+Each story entry contains:
+- `story`: The main story text
+- `instruction`: Prompt and constraints used to generate the story
+- `summary`: Brief summary of the story
+- `source`: The model used to generate the story (GPT-4)
 
-example:
+<details>
+<summary>📝 Click to see example story</summary>
 
-**\['story'\]**
+**Story:**
+```
+Once upon a time, there was a big, red ball that could bounce very high...
+```
+[Rest of the example story]
 
-*Once upon a time, there was a big, red ball that could bounce very high. The ball was very intelligent and could speak a special language that only kids could understand. One sunny day, the ball met a little girl named Lucy.\\n"Hello, Lucy!" said the ball in its special language. Lucy was surprised and asked, "Can you really talk?" The ball smiled and said, "Yes, I can! I am an intelligent ball that can bounce and talk."\\nLucy and the ball became good friends. They played together every day, and the ball would bounce high into the sky, making Lucy laugh. They had lots of fun and were very happy together.\\n In the end, Lucy and the ball taught each other many new things. Lucy learned the ball's special language, and the ball learned how to play new games with Lucy. They were the best of friends and had many more fun days together, filled with laughter and lots of bouncing.*
+**Instruction:**
+- Prompt: 'Write a short story (3-5 paragraphs)...'
+- Required words: ['bounce', 'language', 'intelligent']
+- Features: ['Dialogue']
 
-**\['instruction'\]**
+**Summary:**
+'A big, red ball that could bounce high and speak a special language...'
 
-**prompt**:
+**Source:** GPT-4
+</details>
 
-'Write a short story (3-5 paragraphs) which only uses very simple words that a 3 year old child would understand. The story should use the verb "bounce", the noun "language" and the adjective "intelligent". The story has the following features: the story should contain at least one dialogue. Remember to only use simple words!',
+## 🚀 Installation
 
-**words**:
-
-\['bounce', 'language', 'intelligent'\]
-
-**features**:
-
-\['Dialogue'\]
-
-**\['summary'\]**
-
-*'A big, red ball that could bounce high and speak a special language met a little girl named Lucy, and they became good friends, learning new things from each other and having lots of fun together.'*
-
-**\['source'\]**
-
-*GPT-4*
-
-## Installation
-
-#### Pip
+<details>
+<summary>📦 Pip Installation</summary>
 
 ```bash
 # clone project
@@ -70,8 +67,10 @@ conda activate myenv
 # install requirements
 pip install -r requirements.txt
 ```
+</details>
 
-#### Conda
+<details>
+<summary>🐍 Conda Installation</summary>
 
 ```bash
 # clone project
@@ -84,11 +83,11 @@ conda env create -f environment.yaml -n myenv
 # activate conda environment
 conda activate myenv
 ```
+</details>
 
-## How to run
+## 🏃 How to Run
 
-Train model with default configuration
-
+Train model with default configuration:
 ```bash
 # train on CPU
 python src/train.py trainer=cpu
@@ -97,14 +96,12 @@ python src/train.py trainer=cpu
 python src/train.py trainer=gpu
 ```
 
-Train model with chosen experiment configuration from [configs/experiment/](configs/experiment/)
-
+Train with specific experiment configuration:
 ```bash
 python src/train.py experiment=experiment_name.yaml
 ```
 
-You can override any parameter from command line like this
-
+Override parameters from command line:
 ```bash
 python src/train.py trainer.max_epochs=20 data.batch_size=64
 ```
