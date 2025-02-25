@@ -13,7 +13,7 @@
 
 ## Description
 
-What it does
+This repository implements language models trained on the TinyStories dataset - a collection of simple, child-friendly stories generated using GPT-4. 
 
 ## Dataset and format
 
