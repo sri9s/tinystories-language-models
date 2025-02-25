@@ -9,7 +9,7 @@ accumulate_grad_batches: 8 # gradient accumulation
 min_epochs: 1 # prevents early stopping
 max_epochs: 3
 
-accelerator: cpu
+accelerator: gpu
 devices: 1
 
 # mixed precision for extra speed-up
