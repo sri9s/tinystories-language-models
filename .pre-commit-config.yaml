@@ -19,7 +19,7 @@ repos:
 
   # python code formatting
   - repo: https://github.com/psf/black
-    rev: 23.1.0
+    rev: 23.3.0
     hooks:
       - id: black
         args: [--line-length, "99"]
@@ -29,28 +29,21 @@ repos:
     rev: 5.12.0
     hooks:
       - id: isort
-        args: ["--profile", "black", "--filter-files"]
+        args: ["--profile", "black", "--line-length", "99"]
 
   # python upgrading syntax to newer version
   - repo: https://github.com/asottile/pyupgrade
     rev: v3.3.1
     hooks:
       - id: pyupgrade
-        args: [--py38-plus]
+        args: [--py39-plus]
 
   # python docstring formatting
   - repo: https://github.com/myint/docformatter
-    rev: v1.7.4
+    rev: v1.7.5
     hooks:
       - id: docformatter
-        args:
-          [
-            --in-place,
-            --wrap-summaries=99,
-            --wrap-descriptions=99,
-            --style=sphinx,
-            --black,
-          ]
+        args: [--in-place, --wrap-summaries=99, --wrap-descriptions=99]
 
   # python docstring coverage checking
   - repo: https://github.com/econchick/interrogate
