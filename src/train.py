@@ -1,3 +1,4 @@
+import logging
 from typing import Any, Dict, List, Optional, Tuple
 
 import hydra
@@ -8,6 +9,7 @@ from lightning import Callback, LightningDataModule, LightningModule, Trainer
 from lightning.pytorch.loggers import Logger
 from omegaconf import DictConfig
 
+logging.basicConfig(level=logging.DEBUG)
 rootutils.setup_root(__file__, indicator=".project-root", pythonpath=True)
 # ------------------------------------------------------------------------------------ #
 # the setup_root above is equivalent to:
@@ -32,7 +34,7 @@ log = utils.get_pylogger(__name__)
 
 
 @utils.task_wrapper
-def train(cfg: DictConfig) -> Tuple[Dict[str, Any], Dict[str, Any]]:
+def train(cfg: DictConfig) -> tuple[dict[str, Any], dict[str, Any]]:
     """Trains the model. Can additionally evaluate on a testset, using best weights obtained during
     training.
 
@@ -53,10 +55,10 @@ def train(cfg: DictConfig) -> Tuple[Dict[str, Any], Dict[str, Any]]:
     model: LightningModule = hydra.utils.instantiate(cfg.model)
 
     log.info("Instantiating callbacks...")
-    callbacks: List[Callback] = utils.instantiate_callbacks(cfg.get("callbacks"))
+    callbacks: list[Callback] = utils.instantiate_callbacks(cfg.get("callbacks"))
 
     log.info("Instantiating loggers...")
-    logger: List[Logger] = utils.instantiate_loggers(cfg.get("logger"))
+    logger: list[Logger] = utils.instantiate_loggers(cfg.get("logger"))
 
     log.info(f"Instantiating trainer <{cfg.trainer._target_}>")
     trainer: Trainer = hydra.utils.instantiate(cfg.trainer, callbacks=callbacks, logger=logger)
@@ -69,6 +71,10 @@ def train(cfg: DictConfig) -> Tuple[Dict[str, Any], Dict[str, Any]]:
         "logger": logger,
         "trainer": trainer,
     }
+
+    # download the data
+    datamodule.prepare_data()
+    datamodule.setup()
 
     if logger:
         log.info("Logging hyperparameters!")
