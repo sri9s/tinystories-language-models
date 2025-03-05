@@ -55,7 +55,7 @@ class MNISTDataModule(LightningDataModule):
     def __init__(
         self,
         data_dir: str = "data/",
-        train_val_test_split: Tuple[int, int, int] = (55_000, 5_000, 10_000),
+        train_val_test_split: tuple[int, int, int] = (55_000, 5_000, 10_000),
         batch_size: int = 64,
         num_workers: int = 0,
         pin_memory: bool = False,
@@ -171,14 +171,14 @@ class MNISTDataModule(LightningDataModule):
         """
         pass
 
-    def state_dict(self) -> Dict[Any, Any]:
+    def state_dict(self) -> dict[Any, Any]:
         """Called when saving a checkpoint. Implement to generate and save the datamodule state.
 
         :return: A dictionary containing the datamodule state that you want to save.
         """
         return {}
 
-    def load_state_dict(self, state_dict: Dict[str, Any]) -> None:
+    def load_state_dict(self, state_dict: dict[str, Any]) -> None:
         """Called when loading a checkpoint. Implement to reload datamodule state given datamodule
         `state_dict()`.
 

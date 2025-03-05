@@ -29,7 +29,7 @@ class Tokenizer:
         # print(f"#words: {self.n_words} - BOS ID: {self.bos_id} - EOS ID: {self.eos_id}")
         assert self.sp_model.vocab_size() == self.sp_model.get_piece_size()
 
-    def encode(self, s: str, bos: bool, eos: bool) -> List[int]:
+    def encode(self, s: str, bos: bool, eos: bool) -> list[int]:
         """Encode a string into a list of token IDs.
 
         Parameters
@@ -53,7 +53,7 @@ class Tokenizer:
             t = t + [self.eos_id]
         return t
 
-    def decode(self, t: List[int]) -> str:
+    def decode(self, t: list[int]) -> str:
         """Decode a list of token IDs into a string.
 
         Parameters

@@ -62,7 +62,7 @@ def task_wrapper(task_func: Callable) -> Callable:
     :return: The wrapped task function.
     """
 
-    def wrap(cfg: DictConfig) -> Tuple[Dict[str, Any], Dict[str, Any]]:
+    def wrap(cfg: DictConfig) -> tuple[dict[str, Any], dict[str, Any]]:
         # execute the task
         try:
             metric_dict, object_dict = task_func(cfg=cfg)
@@ -95,7 +95,7 @@ def task_wrapper(task_func: Callable) -> Callable:
     return wrap
 
 
-def get_metric_value(metric_dict: Dict[str, Any], metric_name: str) -> float:
+def get_metric_value(metric_dict: dict[str, Any], metric_name: str) -> float:
     """Safely retrieves value of the metric logged in LightningModule.
 
     :param metric_dict: A dict containing metric values.
