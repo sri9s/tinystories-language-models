@@ -5,12 +5,11 @@
 # - conda allows for installing packages without requiring certain compilers or
 #   libraries to be available in the system, since it installs precompiled binaries
 
-name: myenv
+name: llm
 
 channels:
   - pytorch
   - conda-forge
-  - defaults
 
 # it is strongly recommended to specify versions of packages installed through conda
 # to avoid situation when version-unspecified packages install their latest major
@@ -21,14 +20,16 @@ channels:
 # compatibility is usually guaranteed
 
 dependencies:
-  - pytorch=2.*
-  - torchvision=0.*
-  - lightning=2.*
-  - torchmetrics=0.*
-  - hydra-core=1.*
-  - rich=13.*
-  - pre-commit=3.*
-  - pytest=7.*
+  - python=3.9
+  - pip
+  - pytorch
+  - torchvision
+  - torchaudio
+  - pip:
+    - lightning
+    - hydra-core
+    - transformers
+    - datasets
 
   # --------- loggers --------- #
   # - wandb
@@ -37,8 +38,6 @@ dependencies:
   # - comet-ml
   # - aim>=3.16.2 # no lower than 3.16.2, see https://github.com/aimhubio/aim/issues/2550
 
-  - pip>=23
-  - pip:
-      - hydra-optuna-sweeper
-      - hydra-colorlog
-      - rootutils
+  - rich=13.*
+  - pre-commit=3.*
+  - pytest=7.*
