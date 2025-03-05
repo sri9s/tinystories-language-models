@@ -2,21 +2,20 @@ _target_: lightning.pytorch.trainer.Trainer
 
 default_root_dir: ${paths.output_dir}
 
-overfit_batches: 10 # testing the pipeline
+overfit_batches: 0 # testing the pipeline
 
 accumulate_grad_batches: 8 # gradient accumulation
 
 min_epochs: 1 # prevents early stopping
-max_epochs: 3
+max_epochs: 50
 
-accelerator: gpu
+accelerator: mps
 devices: 1
 
 # mixed precision for extra speed-up
-# precision: 16
+precision: 16-mixed
 
-# perform a validation loop every N training steps
-val_check_interval: 50
+limit_val_batches: 1
 
 # set True to to ensure deterministic results
 # makes training slower but gives more reproducibility than just setting seeds

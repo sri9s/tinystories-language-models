@@ -1,11 +1,13 @@
 """LightningDataModule` for the TinyStories dataset."""
 
+import glob
+import os
 from typing import Any, Dict, Optional, Tuple
 
 from lightning import LightningDataModule
 from torch.utils.data import DataLoader, Dataset
 
-from src.data.tinystories_dataset import PretokDataset
+from src.data.tinystories_dataset import PretokDataset, download, pretokenize
 
 
 class TRANSFORMERDataModule(LightningDataModule):
@@ -55,8 +57,8 @@ class TRANSFORMERDataModule(LightningDataModule):
 
     def __init__(
         self,
-        data_dir: str = "data/TinyStories_all_data/",
-        train_val_test_split: Tuple[int, int, int] = (55_000, 5_000, 10_000),
+        data_dir: str = "ddata/tinystories/",
+        train_val_test_split: tuple[int, int, int] = (55_000, 5_000, 10_000),
         batch_size: int = 8,
         seq_len: int = 1024,
         num_workers: int = 0,
@@ -101,9 +103,19 @@ class TRANSFORMERDataModule(LightningDataModule):
 
         Do not use it to assign state (self.x = y).
         """
-        # MNIST(self.hparams.data_dir, train=True, download=True)
-        # MNIST(self.hparams.data_dir, train=False, download=True)
-        pass
+
+        # download the data
+        download()
+        # Check if .bin files exist
+        data_dir = os.path.join("data", "TinyStories_all_data")
+        bin_files = glob.glob(os.path.join(data_dir, "*.bin"))
+
+        # Only pretokenize if no .bin files found
+        if not bin_files:
+            print("No pretokenized files found. Running pretokenization...")
+            pretokenize()
+        else:
+            print(f"Found {len(bin_files)} pretokenized files. Skipping pretokenization.")
 
     def setup(self, stage: Optional[str] = None) -> None:
         """Load data. Set variables: `self.data_train`, `self.data_val`, `self.data_test`.
@@ -130,6 +142,7 @@ class TRANSFORMERDataModule(LightningDataModule):
             batch_size=self.hparams.batch_size,
             num_workers=self.hparams.num_workers,
             pin_memory=self.hparams.pin_memory,
+            persistent_workers=True,
         )
 
     def val_dataloader(self) -> DataLoader[Any]:
@@ -142,6 +155,7 @@ class TRANSFORMERDataModule(LightningDataModule):
             batch_size=self.hparams.batch_size,
             num_workers=self.hparams.num_workers,
             pin_memory=self.hparams.pin_memory,
+            persistent_workers=True,
         )
 
     def test_dataloader(self) -> DataLoader[Any]:
@@ -165,14 +179,14 @@ class TRANSFORMERDataModule(LightningDataModule):
         """
         pass
 
-    def state_dict(self) -> Dict[Any, Any]:
+    def state_dict(self) -> dict[Any, Any]:
         """Called when saving a checkpoint. Implement to generate and save the datamodule state.
 
         :return: A dictionary containing the datamodule state that you want to save.
         """
         return {}
 
-    def load_state_dict(self, state_dict: Dict[str, Any]) -> None:
+    def load_state_dict(self, state_dict: dict[str, Any]) -> None:
         """Called when loading a checkpoint. Implement to reload datamodule state given datamodule
         `state_dict()`.
 

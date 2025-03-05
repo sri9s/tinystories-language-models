@@ -13,7 +13,7 @@
 
 ## 🎯 Description
 
-This repository implements language models trained on the TinyStories dataset - a collection of simple, child-friendly stories generated using GPT-4. 
+This repository implements language models trained on the TinyStories dataset - a collection of simple, child-friendly stories generated using GPT-4.
 
 ## 📊 Dataset and Format
 
@@ -22,6 +22,7 @@ TinyStories can be found at [HuggingFace Datasets](https://huggingface.co/datase
 ### Data Fields:
 
 Each story entry contains:
+
 - `story`: The main story text
 - `instruction`: Prompt and constraints used to generate the story
 - `summary`: Brief summary of the story
@@ -31,20 +32,24 @@ Each story entry contains:
 <summary>📝 Click to see example story</summary>
 
 **Story:**
+
 ```
 Once upon a time, there was a big, red ball that could bounce very high...
 ```
-[Rest of the example story]
+
+\[Rest of the example story\]
 
 **Instruction:**
+
 - Prompt: 'Write a short story (3-5 paragraphs)...'
-- Required words: ['bounce', 'language', 'intelligent']
-- Features: ['Dialogue']
+- Required words: \['bounce', 'language', 'intelligent'\]
+- Features: \['Dialogue'\]
 
 **Summary:**
 'A big, red ball that could bounce high and speak a special language...'
 
 **Source:** GPT-4
+
 </details>
 
 ## 🚀 Installation
@@ -67,6 +72,7 @@ conda activate myenv
 # install requirements
 pip install -r requirements.txt
 ```
+
 </details>
 
 <details>
@@ -83,11 +89,13 @@ conda env create -f environment.yaml -n myenv
 # activate conda environment
 conda activate myenv
 ```
+
 </details>
 
 ## 🏃 How to Run
 
 Train model with default configuration:
+
 ```bash
 # train on CPU
 python src/train.py trainer=cpu
@@ -97,11 +105,13 @@ python src/train.py trainer=gpu
 ```
 
 Train with specific experiment configuration:
+
 ```bash
 python src/train.py experiment=experiment_name.yaml
 ```
 
 Override parameters from command line:
+
 ```bash
 python src/train.py trainer.max_epochs=20 data.batch_size=64
 ```

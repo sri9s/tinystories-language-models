@@ -103,9 +103,10 @@ repos:
       - id: mdformat
         args: ["--number"]
         additional_dependencies:
-          - mdformat-gfm
+          # - mdformat-gfm
           - mdformat-tables
           - mdformat_frontmatter
+          - markdown-it-py[linkify]
           # - mdformat-toc
           # - mdformat-black
 

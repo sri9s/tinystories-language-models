@@ -67,19 +67,21 @@ def download():
     if not os.path.exists(data_dir):
         os.makedirs(data_dir, exist_ok=True)
         print(f"Unpacking {data_filename}...")
-        with tarfile.open(os.path.join(data_dir, data_filename), "r:gz") as tar:
+        with tarfile.open(data_filename, "r:gz") as tar:
             for member in tar.getmembers():
                 # Ensure that the member is a file (not a directory or symlink)
+                print(f"Member: {member}")
                 if member.isfile():
                     # Check if the filename contains safe characters (modify this as needed)
-                    if not any(char in member.name for char in ["/", "\\", ".."]):
-                        tar.extract(member, data_dir)
+                    # if not any(char in member.name for char in ["/", "\\", ".."]):
+                    tar.extract(member, data_dir)
             # tar.extractall(data_dir)
         # os.system(f"tar -xzf {data_filename} -C {data_dir}")
     else:
         print(f"{data_dir} already exists, skipping unpacking...")
     # print a single example just for debugging and such
     shard_filenames = sorted(glob.glob(os.path.join(data_dir, "*.json")))
+    print(f"Shard filenames: {shard_filenames}")
     with open(shard_filenames[0]) as f:
         data = json.load(f)
     print("Download done.")
@@ -118,7 +120,7 @@ def pretokenize():
     # iterate the shards and tokenize all of them one by one
     data_dir = os.path.join(DATA_CACHE_DIR, "TinyStories_all_data")
     shard_filenames = sorted(glob.glob(os.path.join(data_dir, "*.json")))
-
+    print(f"Shard filenames: {shard_filenames}")
     # process all the shards in a threadpool
     with ThreadPoolExecutor(max_workers=8) as executor:
         executor.map(process_shard, shard_filenames)
@@ -148,9 +150,10 @@ class PretokDataset(torch.utils.data.IterableDataset):
         shard_filenames = sorted(glob.glob(os.path.join(data_dir, "*.bin")))
         # train/test split. let's use only shard 0 for test split, rest train
         shard_filenames = shard_filenames[1:] if self.split == "train" else shard_filenames[:1]
+        print(f"Shard filenames: {shard_filenames} in {self.split} split")
         while True:
             rng.shuffle(shard_filenames)
-            for shard in shard_filenames:
+            for shard in tqdm(shard_filenames, desc="Shards"):
                 # open the dataset for reading but keep it on disk with memmap
                 m = np.memmap(shard, dtype=np.uint16, mode="r")
                 num_batches = len(m) // self.max_seq_len
